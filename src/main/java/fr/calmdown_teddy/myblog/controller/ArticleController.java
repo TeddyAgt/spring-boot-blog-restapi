@@ -2,6 +2,7 @@ package fr.calmdown_teddy.myblog.controller;
 
 import fr.calmdown_teddy.myblog.model.Article;
 import fr.calmdown_teddy.myblog.repository.ArticleRepository;
+import org.springframework.cglib.core.Local;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -39,6 +40,52 @@ public class ArticleController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(article);
+    }
+
+    @GetMapping("/search-title")
+    public ResponseEntity<List<Article>> getArticlesByTitle(@RequestParam String searchTerms) {
+        List<Article> articles = articleRepository.findByTitle(searchTerms);
+
+        if (articles.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(articles);
+    }
+
+    @GetMapping("/search-content")
+    public ResponseEntity<List<Article>> getArticlesByContent(@RequestParam String searchTerms) {
+        List<Article> articles = articleRepository.findByContentContaining(searchTerms);
+
+        if (articles.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(articles);
+    }
+
+    @GetMapping("/created-after")
+    public ResponseEntity<List<Article>> getArticlesCreatedAfter(@RequestParam LocalDateTime date) {
+
+        List<Article> articles = articleRepository.findByCreatedAtAfter(date);
+
+        if (articles.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(articles);
+    }
+
+    @GetMapping("/last-five")
+    ResponseEntity<List<Article>> getLastFiveArticles(@RequestParam LocalDateTime date) {
+
+        List<Article> articles = articleRepository.findTopFiveByOrderByCreatedAt(date);
+
+        if (articles.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(articles);
     }
 
     @PostMapping
