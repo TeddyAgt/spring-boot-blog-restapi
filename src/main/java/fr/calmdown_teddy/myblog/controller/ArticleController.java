@@ -2,6 +2,7 @@ package fr.calmdown_teddy.myblog.controller;
 
 import fr.calmdown_teddy.myblog.model.Article;
 import fr.calmdown_teddy.myblog.repository.ArticleRepository;
+import fr.calmdown_teddy.myblog.service.ArticleService;
 import org.springframework.cglib.core.Local;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,16 +15,16 @@ import java.util.List;
 @RequestMapping("/articles")
 public class ArticleController {
 
-    private final ArticleRepository articleRepository;
+    private final ArticleService articleService;
 
-    public ArticleController(ArticleRepository articleRepository) {
+    public ArticleController(ArticleService articleService) {
 
-        this.articleRepository = articleRepository;
+        this.articleService = articleService;
     }
 
     @GetMapping
     public ResponseEntity<List<Article>> getAllArticles() {
-        List<Article> articles = articleRepository.findAll();
+        List<Article> articles = articleService.getAllArticles();
 
         if (articles.isEmpty()) {
             return ResponseEntity.noContent().build();
@@ -34,12 +35,29 @@ public class ArticleController {
     @GetMapping("/{id}")
     public ResponseEntity<Article> getArticleById(@PathVariable Long id) {
 
-        Article article = articleRepository.findById(id).orElse(null);
+        Article article = articleService.getArticleById(id);
 
         if (article == null) {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(article);
+    }
+
+    @PostMapping
+    public ResponseEntity<Article> createArticle(@RequestBody Article article) {
+        Article savedArticle = articleService.createArticle(article);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedArticle);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Article> updateArticle(@PathVariable Long id, @RequestBody Article articleDetails) {
+
+        Article updatedArticle = articleService.updateArticle(id, articleDetails);
+        if (updatedArticle == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(updatedArticle);
     }
 
     @GetMapping("/search-title")
@@ -88,44 +106,13 @@ public class ArticleController {
         return ResponseEntity.ok(articles);
     }
 
-    @PostMapping
-    public ResponseEntity<Article> createArticle(@RequestBody Article article) {
-
-        article.setCreatedAt(LocalDateTime.now());
-        article.setUpdatedAt(LocalDateTime.now());
-        Article savedArticle = articleRepository.save(article);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedArticle);
-
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<Article> updateArticle(@PathVariable Long id, @RequestBody Article articleDetails) {
-
-        Article article = articleRepository.findById(id).orElse(null);
-
-        if (article == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        article.setTitle(articleDetails.getTitle());
-        article.setContent(articleDetails.getContent());
-        article.setUpdatedAt(LocalDateTime.now());
-
-        Article updatedArticle = articleRepository.save(article);
-        return ResponseEntity.ok(updatedArticle);
-    }
-
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteArticle(@PathVariable Long id) {
-
-        Article article = articleRepository.findById(id).orElse(null);
-
-        if (article == null) {
+        if (articleService.deleteArticle(id)) {
+            return ResponseEntity.noContent().build();
+        } else {
             return ResponseEntity.notFound().build();
         }
-
-        articleRepository.delete(article);
-        return ResponseEntity.noContent().build();
     }
 
 }
